@@ -50,7 +50,6 @@ const int *bank_gpio[BITFURY_MAXBANKS] = {};	// Define which gpio pins are used 
 
 #endif
 
-
 /* Set clock defaults */
 #define CLK_NO_DIV2 0
 

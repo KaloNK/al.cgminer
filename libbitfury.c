@@ -377,8 +377,7 @@ int libbitfury_detectChips(struct bitfury_device *devices) {
 
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t2);
 
-	return n; //!!!
-	//return 1;
+	return n;
 }
 
 int libbitfury_shutdownChips(struct bitfury_device *devices, int chip_n) {
@@ -442,11 +441,13 @@ int rehash(unsigned char *midstate, unsigned m7,
 	sha2(out, 32, out);
 
 	if (out32[7] == 0) {
-		// hex = bin2hex(midstate, 32);
-		// hex = bin2hex(out, 32);
-//		applog(LOG_INFO, "! MS0: %08x, m7: %08x, ntime: %08x, nbits: %08x, nnonce: %08x\n\t\t\t out: %s\n", mid32[0], m7, ntime, nbits, nnonce, hex);
-//		history[history_p] = nnonce;
-//		history_p++; history_p &= 512 - 1;
+#if 0
+		hex = bin2hex(midstate, 32);
+		hex = bin2hex(out, 32);
+		applog(LOG_INFO, "! MS0: %08x, m7: %08x, ntime: %08x, nbits: %08x, nnonce: %08x\n\t\t\t out: %s\n", mid32[0], m7, ntime, nbits, nnonce, hex);
+		history[history_p] = nnonce;
+		history_p++; history_p &= 512 - 1;
+#endif
 		return 1;
 	}
 	return 0;
@@ -599,8 +600,7 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 								found++;
 							}
 							if (!found) {
-								applog(LOG_WARNING, "	nonce %08x bad HW chip %d", pn, chip_id);
-								//printf("AAA Strange: %08x, chip_id: %d\n", pn, chip_id);
+								applog(LOG_WARNING, "  nonce %08x bad HW chip %d", pn, chip_id);
 								d->hw_errors++;
 								inc_hw_errors(thr);
 							}
