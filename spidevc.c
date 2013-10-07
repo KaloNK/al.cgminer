@@ -190,8 +190,8 @@ int spi_txrx(const char *wrbuf, char *rdbuf, int bufsz)
 		}
         }
 
-#ifdef BITFURY_METABANK
-	spi_reset(4096);
+#if BITFURY_MAXBANKS > 1
+	spi_reset(3*BITFURY_BANK_CHIPS);
 #endif
 
 	return 0;
