@@ -19,6 +19,11 @@
 #ifndef SPIDEVC_H
 #define SPIDEVC_H
 
+/* export GPIO functions */
+void gpio_to_out(unsigned int pin);
+void gpio_set(unsigned int pin);
+void gpio_clr(unsigned int pin);
+
 /* Initialize SPI using this function */
 void spi_init(void);
 

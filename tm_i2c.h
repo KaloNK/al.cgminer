@@ -24,7 +24,7 @@
 
 #define TM_MODE_AUTO    0
 #define TM_MODE_MANUAL  1
-#endif
+#endif	//end unused
 
 static int tm_i2c_fd;
 

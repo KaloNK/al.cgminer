@@ -288,8 +288,6 @@ int detect_chip(int chip_n) {
 	ms3_compute(&atrvec[0]);
 	ms3_compute(&atrvec[20]);
 	ms3_compute(&atrvec[40]);
-	spi_init();
-
 
 	spi_clear_buf();
 	spi_emit_break(); /* First we want to break chain! Otherwise we'll get all of traffic bounced to output */
@@ -340,6 +338,7 @@ int libbitfury_detectChips(struct bitfury_device *devices) {
 	static slot_on[BITFURY_MAXBANKS];
 	struct timespec t1, t2;
 
+	spi_init();
 	if (tm_i2c_init() < 0) {
 		printf("I2C init error\n");
 		return(1);

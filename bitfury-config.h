@@ -27,7 +27,8 @@
 #define __BITFURYCONFIG_H__
 
 /* Select your type of hardware */
-// #define BITFURY_MUX_OE 1	// Metabank or other with MUX for OE
+// #define BITFURY_MUX_OE 1	// Metabank or other with I2C MUX for OE
+
 
 /* Set hardware defaults */
 #ifdef BITFURY_MUX_OE
@@ -44,26 +45,27 @@
 #define BITFURY_BANKCHIPS 100
 #define BITFURY_SCANHASH_DELAY 100
 
-#if BITFURY_MAXBANKS > 1
-const int *bank_gpio[BITFURY_MAXBANKS] = {};	// Define which gpio pins are used for OE instead of MUX
-#endif
+#endif	// MUX_OE
 
-#endif
 
 /* Set clock defaults */
 #define CLK_NO_DIV2 0
 
 #if CLK_NO_DIV2
+
 #define CLK_BITS_MIN 30
 #define CLK_BITS_MAX 48
 #define CLK_BITS_DEF 40
 #define CLK_BITS_INIT 38
+
 #else
+
 #define CLK_BITS_MIN 48
 #define CLK_BITS_MAX 57
-#define CLK_BITS_DEF 54
+#define CLK_BITS_DEF 55
 #define CLK_BITS_INIT 52
-#endif
+
+#endif	// CLK_NO_DIV2
 
 
 /* Set stats options */
