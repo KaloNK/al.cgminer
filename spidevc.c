@@ -173,8 +173,7 @@ int spi_txrx(const char *wrbuf, char *rdbuf, int bufsz)
 
 	memset(&tr,0,sizeof(tr));
 
-	spi_reset(2048);
-
+	spi_reset(4*BITFURY_BANKCHIPS);
 
 	rv = 0;
 	while (bufsz >= 4096) {
@@ -207,7 +206,7 @@ int spi_txrx(const char *wrbuf, char *rdbuf, int bufsz)
 	}
 
 #if(BITFURY_MAXBANKS > 1)
-	spi_reset(3*BITFURY_BANKCHIPS);
+	spi_reset(4*BITFURY_BANKCHIPS);
 #endif
 
 	return 0;

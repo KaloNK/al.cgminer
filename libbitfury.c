@@ -177,6 +177,7 @@ void ms3_compute(unsigned *p)
 void send_conf() {
 	config_reg(7,0); config_reg(8,0); config_reg(9,0); config_reg(10,0); config_reg(11,0);
 	config_reg(6,0); /* disable OUTSLK */
+//	config_reg(6,1); /* enable OUTSLK */
 	config_reg(4,1); /* Enable slow oscillator */
 	config_reg(1,0); config_reg(2,0); config_reg(3,CLK_NO_DIV2);
 	spi_emit_data(0x0100, (void*)counters, 16); /* Program counters correctly for rounds processing, here baby should start consuming power */
