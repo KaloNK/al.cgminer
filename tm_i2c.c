@@ -43,7 +43,11 @@ void tm_i2c_close() {
 	close(tm_i2c_fd);
 }
 
-unsigned int tm_i2c_req(unsigned char slot, unsigned char cmd, unsigned int data) {
+unsigned int tm_i2c_req_slot(unsigned char slot, unsigned char cmd, unsigned int data) {
+	return(tm_i2c_req(tm_i2c_fd, ((TM_ADDR >> 1) + slot), cmd, data));
+}
+
+unsigned int tm_i2c_req(int fd, unsigned char addr, unsigned char cmd, unsigned int data) {
 	int i;
 	unsigned char buf[16];
 	struct i2c_msg msg;
@@ -56,7 +60,7 @@ unsigned int tm_i2c_req(unsigned char slot, unsigned char cmd, unsigned int data
 	tm->data_msb = (data & 0xFF00) >> 8;
 
 	/* Write CMD */
-	msg.addr = (TM_ADDR >> 1) + slot;
+	msg.addr = addr;
 	msg.flags = 0;
 	msg.len = 3;
 	msg.buf = buf;
@@ -67,7 +71,7 @@ unsigned int tm_i2c_req(unsigned char slot, unsigned char cmd, unsigned int data
 	}
 
 	/* Read result */
-	msg.addr = (TM_ADDR >> 1) + slot;
+	msg.addr = addr;
 	msg.flags = I2C_M_RD;
 	msg.len = 3;
 	msg.buf = buf;

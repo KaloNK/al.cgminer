@@ -4,6 +4,9 @@
 
 #define TM_SET_OE       0x20
 
+#define TM_GET_PORTD    0x33
+#define TM_SET_PORTD    0x34
+
 #if 0	//unused
 
 #define TM_GET_TEMP     0x10
@@ -17,8 +20,6 @@
 #define TM_GET_PORTB    0x30
 #define TM_SET_PORTB    0x31
 #define TM_GET_PINB     0x32
-#define TM_GET_PORTD    0x33
-#define TM_SET_PORTD    0x34
 #define TM_GET_PIND     0x35
 #define TM_GET_ADC      0x36
 
@@ -37,11 +38,16 @@ typedef struct {
 int tm_i2c_init();
 void tm_i2c_close();
 
+unsigned int tm_i2c_req_slot(unsigned char slot, unsigned char cmd, unsigned int data);
+unsigned int tm_i2c_req(int fd, unsigned char addr, unsigned char cmd, unsigned int data);
+
 void tm_i2c_set_oe(unsigned char slot);
 void tm_i2c_clear_oe(unsigned char slot);
 int tm_i2c_detect(unsigned char slot);
 
 #if 0	// unused
+
+unsigned char tm_i2c_slot2addr(unsigned char slot);
 
 float tm_i2c_gettemp(unsigned char slot);
 float tm_i2c_getcore0(unsigned char slot);
