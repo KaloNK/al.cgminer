@@ -7,11 +7,11 @@
 #define TM_GET_PORTD    0x33
 #define TM_SET_PORTD    0x34
 
-#if 0	//unused
-
 #define TM_GET_TEMP     0x10
 #define TM_GET_CORE0    0x11
 #define TM_GET_CORE1    0x12
+
+#if 0	//unused
 
 #define TM_SET_MODE     0x21
 #define TM_SET_RED      0x22

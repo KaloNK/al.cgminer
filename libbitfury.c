@@ -39,8 +39,8 @@
 
 #include <time.h>
 
-#define BITFURY_REFRESH_DELAY 100
-#define BITFURY_DETECT_TRIES 3000 / BITFURY_REFRESH_DELAY
+#define BITFURY_REFRESH_DELAY 10
+#define BITFURY_DETECT_TRIES 10
 
 // 0 .... 31 bit
 // 1000 0011 0101 0110 1001 1010 1100 0111
@@ -214,11 +214,11 @@ void set_freq(int bits) {
 	config_reg(4,1); /* Enable slow oscillator */
 }
 
-void send_reinit(int slot, int chip_n, int n) {
+void send_reinit(int slot, int chip_n, int bits) {
 	spi_clear_buf();
 	spi_emit_break();
 	spi_emit_fasync(chip_n);
-	set_freq(n);
+	set_freq(bits);
 	send_conf();
 	send_init();
 	tm_i2c_set_oe(slot);
@@ -327,7 +327,7 @@ int detect_chip(int chip_n) {
 		if (newbuf[16] != 0 && newbuf[16] != 0xFFFFFFFF) {
 			return 0;
 		}
-		nmsleep(BITFURY_REFRESH_DELAY / 10);
+		nmsleep(BITFURY_REFRESH_DELAY);
 		memcpy(oldbuf, newbuf, 17 * 4);
 	}
 	return 0;
@@ -569,10 +569,10 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn+0x02C00000) ? pn + 0x02C00000 : 0;
 					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn+0x00400000) ? pn + 0x00400000 : 0;
 #endif
-					if (s) {
+					if (s || (!pn && rehash(op->midstate, op->m7, op->ntime, op->nbits, pn))) {
 						int k;
 						int dup = 0;
-						for (k = 0; k < results_num; k++) {
+						for (k = 0; !dup && k < results_num; k++) {
 							if (results[k] == bswap_32(s)) {
 								dup = 1;
 							}
@@ -591,7 +591,7 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn+0x2C00000)? pn + 0x2C00000 : 0;
 						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn+0x400000) ? pn + 0x400000 : 0;
 #endif
-						if (s) {
+						if (s || (!pn && rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn))) {
 							d->old_nonce = bswap_32(s);
 							found++;
 						} else {
@@ -604,11 +604,11 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn+0x2C00000)? pn + 0x2C00000 : 0;
 							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn+0x400000) ? pn + 0x400000 : 0;
 #endif
-							if (s) {
+							if (s || (!pn && rehash(p->midstate, p->m7, p->ntime, p->nbits, pn))) {
 								d->future_nonce = bswap_32(s);
 								found++;
 							}
-							if (!found) {
+							if (!found && total_secs > 30) {
 								applog(LOG_WARNING, "  nonce %08x bad HW chip %d", pn, chip_id);
 								d->hw_errors++;
 								inc_hw_errors(thr);

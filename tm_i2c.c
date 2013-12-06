@@ -9,12 +9,18 @@
 
 #ifndef BITFURY_MUX_OE
 
-//#define BF_OE_ACTIVE_LOW
+#define BF_OE_ACTIVE_LOW
 
 #if (BITFURY_MAXBANKS > 1)
-//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {};     // Define which gpio pins are used for OE instead of MUX
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {};							// Define which gpio pins are used for OE instead of MUX
 
-static const int bf_bank_gpio[BITFURY_MAXBANKS] = {18,23,24,25};       // BFSB master boards V1-V3 ?
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {18,23,24,25};				// BFSB master boards V1-V3 ?
+
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25};										// 4
+static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7};									// 6
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27};								// 8
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27,28,29,30,31};					// 12
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27,28,29,30,31,14,15,17,18};		// 16
 
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {4,17,18,22,23,24,25};       // All possible RPi P1 pins - GPIO without special functionality both revisions
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {4,17,18,22,23,24,25,21};    // All possible RPi P1 pins - GPIO without special functionality Revision 1 header pin 13 is 21

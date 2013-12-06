@@ -33,20 +33,20 @@
 /* Set hardware defaults */
 #ifdef BITFURY_MUX_OE
 
-#define BITFURY_MAXCHIPS 256
 #define BITFURY_MAXBANKS 32
 #define BITFURY_BANKCHIPS 8
+
 #define BITFURY_SCANHASH_DELAY 60
 
 #else
 
-#define BITFURY_MAXCHIPS 100
-#define BITFURY_MAXBANKS 1
-#define BITFURY_BANKCHIPS 100
-#define BITFURY_SCANHASH_DELAY 100
+#define BITFURY_MAXBANKS 6
+#define BITFURY_BANKCHIPS 14
+#define BITFURY_SCANHASH_DELAY 80
 
 #endif	// MUX_OE
 
+#define BITFURY_MAXCHIPS (BITFURY_MAXBANKS*BITFURY_BANKCHIPS)
 
 /* Set clock defaults */
 #define CLK_NO_DIV2 0
@@ -55,14 +55,14 @@
 
 #define CLK_BITS_MIN 30
 #define CLK_BITS_MAX 48
-#define CLK_BITS_DEF 40
+#define CLK_BITS_DEF 42
 #define CLK_BITS_INIT 38
 
 #else
 
 #define CLK_BITS_MIN 48
 #define CLK_BITS_MAX 57
-#define CLK_BITS_DEF 55
+#define CLK_BITS_DEF 54
 #define CLK_BITS_INIT 52
 
 #endif	// CLK_NO_DIV2

@@ -41,7 +41,7 @@
 static volatile unsigned *gpio;
 static int fd;
 
-static int mode = 0, bits = 8, speed = 4000000;
+static int mode = 0, bits = 8, speed = 200000;
 
 void spi_init(void)
 {
@@ -204,10 +204,6 @@ int spi_txrx(const char *wrbuf, char *rdbuf, int bufsz)
 			return -1; 
 		}
 	}
-
-#if(BITFURY_MAXBANKS > 1)
-	spi_reset(4*BITFURY_BANKCHIPS);
-#endif
 
 	return 0;
 }
