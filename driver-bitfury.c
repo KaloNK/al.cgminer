@@ -131,6 +131,13 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 
 	for (chip = 0; chip < chip_n; chip++) {
 		dev = &devices[chip];
+		if (dev->osc6_bits != dev->osc6_req) {
+			dev->osc6_bits = dev->osc6_req;
+			send_freq(dev->slot, dev->fasync, dev->osc6_bits);
+			nmsleep(1);
+			send_reinit(dev->slot, dev->fasync, dev->osc6_bits);
+		}
+
 		dev->job_switched = 0;
 		if(!dev->work) {
 			dev->work = get_queued(thr->cgpu);
