@@ -106,7 +106,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	int chip_n;
 	int chip;
 	uint64_t hashes = 0;
-	struct timeval now;
+	struct timeval now, scan_end;
 	unsigned char line[2048];
 	static time_t short_out_t;
 	static time_t long_out_t;
@@ -323,8 +323,16 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 		long_out_t = now.tv_sec;
 	}
 #endif
+	cgtime(&scan_end);
+	i = scan_end.tv_usec - now.tv_usec;
+	if (i<0) {
+		i += 1000000;
+	}
+	if (i/1000 > BITFURY_SCANHASH_INTERVAL || short_out_t == now.tv_sec) {
+		applog(LOG_WARNING, "Scan took %d us", i);
+	}
 
-	nmsleep(BITFURY_SCANHASH_DELAY);
+	nmsleep(BITFURY_SCANHASH_INTERVAL - i/1000);
 
 	return hashes;
 }

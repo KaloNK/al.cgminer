@@ -36,17 +36,16 @@
 #define BITFURY_MAXBANKS 32
 #define BITFURY_BANKCHIPS 8
 
-#define BITFURY_SCANHASH_DELAY 60
-
 #else
 
 #define BITFURY_MAXBANKS 6
 #define BITFURY_BANKCHIPS 14
-#define BITFURY_SCANHASH_DELAY 80
 
 #endif	// MUX_OE
 
 #define BITFURY_MAXCHIPS (BITFURY_MAXBANKS*BITFURY_BANKCHIPS)
+
+#define BITFURY_SCANHASH_INTERVAL 50	// scan for nonces ~20 times per second
 
 /* Set clock defaults */
 #define CLK_NO_DIV2 0
