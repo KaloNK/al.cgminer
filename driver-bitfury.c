@@ -42,6 +42,8 @@ int calc_stat(time_t * stat_ts, time_t stat, struct timeval now);
 double shares_to_ghashes(int shares, int seconds);
 static void get_options(struct cgpu_info *cgpu);
 
+static int scan_delay = 0;
+
 static void bitfury_detect(void)
 {
 	int chip_n;
@@ -77,8 +79,8 @@ static int bitfury_submitNonce(struct thr_info *thr, struct bitfury_device *devi
 
 	for(i=0; i<32; i++) {
 		if(device->nonces[i] == nonce) {
-		    is_dupe = 1;
-		    break;
+			is_dupe = 1;
+			break;
 		}
 	}
 
@@ -111,14 +113,13 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	static time_t short_out_t;
 	static time_t long_out_t;
 	static time_t long_long_out_t;
-	static first = 0; //TODO Move to detect()
 	int i;
 	int nonces_cnt;
 
 	devices = thr->cgpu->devices;
 	chip_n = thr->cgpu->chip_n;
 
-	if (!first) {
+	if (!scan_delay) {
 		for (i = 0; i < chip_n; i++) {
 			devices[i].osc6_bits = devices[i].osc6_bits_setpoint;
 			devices[i].osc6_req = devices[i].osc6_bits_setpoint;
@@ -126,8 +127,8 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 		for (i = 0; i < chip_n; i++) {
 			send_reinit(devices[i].slot, devices[i].fasync, devices[i].osc6_bits);
 		}
+		scan_delay = 50000;
 	}
-	first = 1;
 
 	for (chip = 0; chip < chip_n; chip++) {
 		dev = &devices[chip];
@@ -151,6 +152,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	libbitfury_sendHashData(thr, devices, chip_n);
 
 	cgtime(&now);
+
 	chip = 0;
 	for (;chip < chip_n; chip++) {
 		nonces_cnt = 0;
@@ -194,6 +196,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 		char stat_lines[BITFURY_MAXBANKS][256] = {0};
 		int len, k;
 		double gh[BITFURY_MAXBANKS][BITFURY_BANKCHIPS][2] = {0};
+		double total_expgh = 0;
 
 		applog(LOG_WARNING, "");
 		sprintf(line, "vvvvwww SHORT stat %ds: wwwvvvv", BITFURY_SHORT_STATS);
@@ -248,6 +251,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 					expghsum += gh[i][k][1] + gh[i][k + BITFURY_BANKCHIPS/2][1];
 				}
 				if (ghsum) {
+					total_expgh += expghsum;
 					snprintf(stat_lines[i] + len, 256 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
 						i, gh1h, gh2h, ghsum, expghsum, deviation_percents(ghsum, expghsum));
 				} else {
@@ -256,7 +260,20 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 				applog(LOG_WARNING, stat_lines[i]);
 			}
 		}
+		applog(LOG_WARNING, "Total expected: %0.2f Gh/s (%0.2f Gh/s per chip)", total_expgh, total_expgh/chip_n);
 		short_out_t = now.tv_sec;
+		if (total_expgh) {
+			scan_delay = 1000 * chip_n / (total_expgh / chip_n);
+		} else {
+			scan_delay = 1000 * chip_n / 2.5;
+		}
+		if (chip_n < 17) {
+			scan_delay << 3;
+		} else if (chip_n < 33) {
+			scan_delay << 2;
+		} else if (chip_n < 65) {
+			scan_delay << 1;
+		}
 	}
 #endif
 #ifdef BITFURY_LONG_STATS
@@ -265,6 +282,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 		char stat_lines[BITFURY_MAXBANKS][256] = {0};
 		int len, k;
 		double gh[BITFURY_MAXBANKS][BITFURY_BANKCHIPS][2] = {0};
+		double total_expgh = 0;
 
 		applog(LOG_WARNING, "");
 		sprintf(line, "!!!_________ LONG stat %ds: ___________!!!", BITFURY_LONG_STATS);
@@ -312,14 +330,16 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 					expghsum += gh[i][k][1] + gh[i][k + BITFURY_BANKCHIPS/2][1];
 				}
 				if (ghsum) {
-					snprintf(stat_lines[i] + len, 2048 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
+					total_expgh += expghsum;
+					snprintf(stat_lines[i] + len, 256 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
 						i, gh1h, gh2h, ghsum, expghsum, deviation_percents(ghsum, expghsum));
 				} else {
-					snprintf(stat_lines[i] + len, 2048 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s", i, gh1h, gh2h, ghsum);
+					snprintf(stat_lines[i] + len, 256 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s", i, gh1h, gh2h, ghsum);
 				}
 				applog(LOG_WARNING, stat_lines[i]);
 			}
 		}
+		applog(LOG_WARNING, "Total expected: %0.2f Gh/s (%0.2f Gh/s per chip)", total_expgh, total_expgh/chip_n);
 		long_out_t = now.tv_sec;
 	}
 #endif
@@ -328,11 +348,13 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	if (i<0) {
 		i += 1000000;
 	}
-	if (i/1000 > BITFURY_SCANHASH_INTERVAL || short_out_t == now.tv_sec) {
+
+	if (i > scan_delay) {
 		applog(LOG_WARNING, "Scan took %d us", i);
+		i = 0.9 * scan_delay;	// sleep 1/10 of the interval
 	}
 
-	nmsleep(BITFURY_SCANHASH_INTERVAL - i/1000);
+	nmsleep((scan_delay - i)/1000);
 
 	return hashes;
 }

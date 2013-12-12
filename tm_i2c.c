@@ -17,8 +17,8 @@
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {18,23,24,25};				// BFSB master boards V1-V3 ?
 
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25};										// 4
-static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7};									// 6
-//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27};								// 8
+//static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7};									// 6
+static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27};								// 8
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27,28,29,30,31};					// 12
 //static const int bf_bank_gpio[BITFURY_MAXBANKS] = {22,23,24,25,8,7,4,27,28,29,30,31,14,15,17,18};		// 16
 
