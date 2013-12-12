@@ -267,12 +267,14 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 		} else {
 			scan_delay = 1000 * chip_n / 2.5;
 		}
-		if (chip_n < 17) {
-			scan_delay << 3;
+		if (chip_n < 9) {
+			scan_delay <<= 4;
+		} else if (chip_n < 17) {
+			scan_delay <<= 3;
 		} else if (chip_n < 33) {
-			scan_delay << 2;
+			scan_delay <<= 2;
 		} else if (chip_n < 65) {
-			scan_delay << 1;
+			scan_delay <<= 1;
 		}
 	}
 #endif
@@ -350,7 +352,7 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	}
 
 	if (i > scan_delay) {
-		applog(LOG_WARNING, "Scan took %d us", i);
+		applog(LOG_WARNING, "Scan took %d us with scan interval %d", i, scan_delay);
 		i = 0.9 * scan_delay;	// sleep 1/10 of the interval
 	}
 
