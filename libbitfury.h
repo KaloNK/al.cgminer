@@ -53,7 +53,7 @@ struct bitfury_device {
 	struct bitfury_payload payload;
 	struct bitfury_payload opayload;
 	struct bitfury_payload o2payload;
-	unsigned int results[16];
+	unsigned int results[(BITFURY_MAXCHIPS*4)];
 	int results_n;
 	time_t stat_ts[BITFURY_STAT_N];
 	unsigned int stat_counter;
@@ -77,10 +77,8 @@ struct bitfury_device {
 	unsigned fasync;
 	unsigned hw_errors;
 	unsigned int matching_work;
-	unsigned int nonces[32];
+	unsigned int nonces[(BITFURY_MAXCHIPS*4)];
 	int current_nonce;
-	double gh_stat[8];
-	int strange_counter;
 };
 
 int libbitfury_readHashData(unsigned int *res);

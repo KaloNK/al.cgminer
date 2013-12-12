@@ -555,20 +555,18 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 			d->future_nonce = 0;
 			for (i = 0; i < 16; i++) {
 				if (oldbuf[i] != newbuf[i] && op && op->ntime && o2p) {
-					unsigned pn; //possible nonce
-					unsigned int s = 0; //TODO zero may be solution
-					unsigned int old_f = 0;
-					if ((newbuf[i] & 0xFF) == 0xE0)
+					unsigned pn;	// possible nonce
+					unsigned int s = 0;
+
+					if ((newbuf[i] & 0xFF) == 0xE0) {
 						continue;
+					}
+
 					pn = decnonce(newbuf[i]);
 					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn-0x00800000) ? pn - 0x00800000 : 0;
 					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn) ? pn : 0;
 					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn-0x00400000) ? pn - 0x00400000 : 0;
-#if 0
-					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn+0x02800000) ? pn + 0x02800000 : 0;
-					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn+0x02C00000) ? pn + 0x02C00000 : 0;
-					s |= rehash(op->midstate, op->m7, op->ntime, op->nbits, pn+0x00400000) ? pn + 0x00400000 : 0;
-#endif
+
 					if (s || (!pn && rehash(op->midstate, op->m7, op->ntime, op->nbits, pn))) {
 						int k;
 						int dup = 0;
@@ -586,11 +584,7 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn-0x800000) ? pn - 0x800000 : 0;
 						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn) ? pn : 0;
 						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn-0x400000) ? pn - 0x400000 : 0;
-#if 0
-						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn+0x2800000)? pn + 0x2800000 : 0;
-						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn+0x2C00000)? pn + 0x2C00000 : 0;
-						s |= rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn+0x400000) ? pn + 0x400000 : 0;
-#endif
+
 						if (s || (!pn && rehash(o2p->midstate, o2p->m7, o2p->ntime, o2p->nbits, pn))) {
 							d->old_nonce = bswap_32(s);
 							found++;
@@ -599,11 +593,7 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn-0x800000) ? pn - 0x800000 : 0;
 							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn) ? pn : 0;
 							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn-0x400000) ? pn - 0x400000 : 0;
-#if 0
-							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn+0x2800000)? pn + 0x2800000 : 0;
-							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn+0x2C00000)? pn + 0x2C00000 : 0;
-							s |= rehash(p->midstate, p->m7, p->ntime, p->nbits, pn+0x400000) ? pn + 0x400000 : 0;
-#endif
+
 							if (s || (!pn && rehash(p->midstate, p->m7, p->ntime, p->nbits, pn))) {
 								d->future_nonce = bswap_32(s);
 								found++;

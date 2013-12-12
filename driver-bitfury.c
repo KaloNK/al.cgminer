@@ -35,16 +35,26 @@
 
 struct device_drv bitfury_drv;
 
-// Forward declarations
-static void bitfury_disable(struct thr_info* thr);
-static bool bitfury_prepare(struct thr_info *thr);
-int calc_stat(time_t * stat_ts, time_t stat, struct timeval now);
-double shares_to_ghashes(int shares, int seconds);
-static void get_options(struct cgpu_info *cgpu);
-
 static int scan_delay = 0;
 static int short_out_t = 0;
 static int long_out_t = 0;
+
+
+double shares_to_ghashes(int shares, int seconds) {
+	return ( (double)shares * 4.294967296 ) / ( (double)seconds );
+
+}
+
+int calc_stat(time_t * stat_ts, time_t stat, struct timeval now) {
+	int j;
+	int shares_found = 0;
+	for(j = 0; j < BITFURY_STAT_N; j++) {
+		if (now.tv_sec - stat_ts[j] < stat) {
+			shares_found++;
+		}
+	}
+	return shares_found;
+}
 
 static void bitfury_detect(void)
 {
@@ -77,26 +87,24 @@ static uint32_t bitfury_checkNonce(struct work *work, uint32_t nonce)
 static int bitfury_submitNonce(struct thr_info *thr, struct bitfury_device *device, struct timeval *now, struct work *owork, uint32_t nonce)
 {
 	int i;
-	int is_dupe = 0;
 
-	for(i=0; i<32; i++) {
+	for(i=0; i<(BITFURY_MAXCHIPS*4); i++) {
 		if(device->nonces[i] == nonce) {
-			is_dupe = 1;
-			break;
+			return 0;
 		}
 	}
 
-	if(!is_dupe) {
-		submit_nonce(thr, owork, nonce);
-		device->nonces[device->current_nonce++] = nonce;
-		if(device->current_nonce > 32)
-			device->current_nonce = 0;
-		device->stat_ts[device->stat_counter++] = now->tv_sec;
-		if (device->stat_counter == BITFURY_STAT_N)
-			device->stat_counter = 0;
+	submit_nonce(thr, owork, nonce);
+	device->nonces[device->current_nonce++] = nonce;
+	if(device->current_nonce > (BITFURY_MAXCHIPS*4)) {
+		device->current_nonce = 0;
+	}
+	device->stat_ts[device->stat_counter++] = now->tv_sec;
+	if (device->stat_counter == BITFURY_STAT_N) {
+		device->stat_counter = 0;
 	}
 
-	return(!is_dupe);
+	return 1;
 }
 
 static double deviation_percents(double actual, double expected)
@@ -312,39 +320,9 @@ static int64_t bitfury_scanHash(struct thr_info *thr)
 	return hashes;
 }
 
-double shares_to_ghashes(int shares, int seconds) {
-	return ( (double)shares * 4.294967296 ) / ( (double)seconds );
-
-}
-
-int calc_stat(time_t * stat_ts, time_t stat, struct timeval now) {
-	int j;
-	int shares_found = 0;
-	for(j = 0; j < BITFURY_STAT_N; j++) {
-		if (now.tv_sec - stat_ts[j] < stat) {
-			shares_found++;
-		}
-	}
-	return shares_found;
-}
-
 static void bitfury_statline_before(char *buf, struct cgpu_info *cgpu)
 {
 	applog(LOG_INFO, "INFO bitfury_statline_before");
-}
-
-static bool bitfury_prepare(struct thr_info *thr)
-{
-	struct timeval now;
-	struct cgpu_info *cgpu = thr->cgpu;
-
-	cgtime(&now);
-	get_datestamp(cgpu->init, &now);
-
-	get_options(cgpu);
-
-	applog(LOG_INFO, "INFO bitfury_prepare");
-	return true;
 }
 
 static void bitfury_shutdown(struct thr_info *thr)
@@ -428,6 +406,20 @@ static void get_options(struct cgpu_info *cgpu)
 		if(comma != NULL)
 			ptr = ++comma;
 	} while (comma != NULL);
+}
+
+static bool bitfury_prepare(struct thr_info *thr)
+{
+	struct timeval now;
+	struct cgpu_info *cgpu = thr->cgpu;
+
+	cgtime(&now);
+	get_datestamp(cgpu->init, &now);
+
+	get_options(cgpu);
+
+	applog(LOG_INFO, "INFO bitfury_prepare");
+	return true;
 }
 
 static struct api_data *bitfury_api_stats(struct cgpu_info *cgpu)
