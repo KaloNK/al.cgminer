@@ -628,7 +628,7 @@ int libbitfury_sendHashData(struct thr_info *thr, struct bitfury_device *bf, int
 				double mhz;
 				int ccase;
 
-				shift = 800000;
+				shift = 0x120000;
 				if (smart) {
 					cycles = d->counter1 < d->counter2 ? 0x00400000 - d->counter2 + d->counter1 : d->counter1 - d->counter2; // + 0x003FFFFF;
 				} else {

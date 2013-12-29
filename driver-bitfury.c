@@ -129,9 +129,9 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 {
 	if (now->tv_sec - *out_t > stat_interval) {
 		struct bitfury_device *dev;
-		unsigned char line[4096];
+		unsigned char line[512];
 		int shares_first = 0, shares_last = 0, shares_total = 0;
-		char stat_lines[BITFURY_MAXBANKS][4096] = {0};
+		char stat_lines[BITFURY_MAXBANKS][512] = {0};
 		int chip, len, i, k;
 		double gh[BITFURY_MAXBANKS][BITFURY_BANKCHIPS][2] = {0};
 		double total_expgh = 0;
@@ -158,11 +158,11 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 				double expected_ghash;
 
 				gh[dev->slot][chip % BITFURY_BANKCHIPS][1] = expected_ghash = dev->mhz * 0.765 / 65;
-				snprintf(stat_lines[dev->slot] + len, 4096 - len, "\n	Chip %d	%.2f Gh/s @ %3.0f MHz (%d bits)		= %.2f Gh/s %+05.1f%% ",
+				snprintf(stat_lines[dev->slot] + len, 512 - len, "\n	Chip %3d	%.2f Gh/s @ %3.0f MHz (%d bits)		= %.2f Gh/s %+05.1f%% ",
 					chip, ghash, dev->mhz, dev->osc6_bits, expected_ghash, deviation_percents(ghash, expected_ghash));
 			} else {
 				gh[dev->slot][chip % BITFURY_BANKCHIPS][1] = 0;
-				snprintf(stat_lines[dev->slot] + len, 4096 - len, "\n	Chip %d	%.2f Gh/s @ %3.0f MHz (%d bits)", chip, ghash, dev->mhz, dev->osc6_bits);
+				snprintf(stat_lines[dev->slot] + len, 512 - len, "\n	Chip %3d	%.2f Gh/s @ %3.0f MHz (%d bits)", chip, ghash, dev->mhz, dev->osc6_bits);
 			}
 
 			if(*out_t && ghash < 0.5) {
@@ -175,7 +175,7 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 			shares_first += chip < BITFURY_BANKCHIPS/2 ? shares_found : 0;
 			shares_last += chip >= BITFURY_BANKCHIPS/2 ? shares_found : 0;
 
-			if ( strlen(stat_lines[dev->slot]) > 3500 || !((chip + 1) % BITFURY_BANKCHIPS) ) {
+			if ( strlen(stat_lines[dev->slot]) > 200 || !((chip + 1) % BITFURY_BOARDCHIPS) ) {
 				applog(log_prio, stat_lines[dev->slot]);
 				stat_lines[dev->slot][0] = ' ';
 				stat_lines[dev->slot][1] = 0;
@@ -188,18 +188,18 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 			if(len) {
 				double expghsum = 0, ghsum = 0, gh1h = 0, gh2h = 0;
 
-				for(k = 0; k < BITFURY_BANKCHIPS/2; k++) {
+				for(k = 0; k < BITFURY_BOARDCHIPS; k++) {	// ToDo make it work for more than just 2 boards
 					gh1h += gh[i][k][0];
-					gh2h += gh[i][k + BITFURY_BANKCHIPS/2][0];
-					ghsum += gh[i][k][0] + gh[i][k + BITFURY_BANKCHIPS/2][0];
-					expghsum += gh[i][k][1] + gh[i][k + BITFURY_BANKCHIPS/2][1];
+					gh2h += gh[i][k + BITFURY_BOARDCHIPS][0];
+					ghsum += gh[i][k][0] + gh[i][k + BITFURY_BOARDCHIPS][0];
+					expghsum += gh[i][k][1] + gh[i][k + BITFURY_BOARDCHIPS][1];
 				}
 				if (ghsum) {
 					total_expgh += expghsum;
-					snprintf(stat_lines[i] + len, 4096 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
+					snprintf(stat_lines[i] + len, 512 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
 						i, gh1h, gh2h, ghsum, expghsum, deviation_percents(ghsum, expghsum));
 				} else {
-					snprintf(stat_lines[i] + len, 4096 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s", i, gh1h, gh2h, ghsum);
+					snprintf(stat_lines[i] + len, 512 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s", i, gh1h, gh2h, ghsum);
 				}
 				applog(log_prio, stat_lines[i]);
 			}
@@ -383,14 +383,14 @@ static void get_options(struct cgpu_info *cgpu)
 			if (colon) {
 				*(colon++) = '\0';
 				colon2 = strchr(colon, ':');
-				if (colon2)
+				if (colon2) {
 					*(colon2++) = '\0';
-				if (*buf && *colon && *colon2) {
+
 					slot = atoi(buf);
 					fs = atoi(colon);
 					bits = atoi(colon2);
 					chip = bitfury_findChip(cgpu->devices, cgpu->chip_n, slot, fs);
-					if(chip > 0 && chip < cgpu->chip_n && bits >= CLK_BITS_MIN && bits <= CLK_BITS_MAX) {
+					if(chip >= 0 && chip < cgpu->chip_n && bits >= CLK_BITS_MIN && bits <= CLK_BITS_MAX) {
 						cgpu->devices[chip].osc6_bits_setpoint = bits;
 						applog(LOG_INFO, "Set clockbits: slot=%d chip=%d bits=%d", slot, fs, bits);
 					}
