@@ -133,8 +133,8 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 		int shares_first = 0, shares_last = 0, shares_total = 0;
 		char stat_lines[BITFURY_MAXBANKS][512] = {0};
 		int chip, len, i, k;
-		double gh[BITFURY_MAXBANKS][BITFURY_BANKCHIPS][2] = {0};
-		double total_expgh = 0;
+		double gh[BITFURY_MAXBANKS][BITFURY_BANKCHIPS][3] = {0};
+		double total_expgh = 0, total_expgh2 = 0;
 
 #ifdef BITFURY_LONG_STATS
 		if (stat_interval == BITFURY_LONG_STATS) {
@@ -155,13 +155,14 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 			ghash = shares_to_ghashes(shares_found, stat_interval);
 			gh[dev->slot][chip % BITFURY_BANKCHIPS][0] = ghash;
 			if (dev->mhz) {
-				double expected_ghash;
+				double expected_ghash, expected_ghash2;
 
 				gh[dev->slot][chip % BITFURY_BANKCHIPS][1] = expected_ghash = dev->mhz * 0.765 / 65;
-				snprintf(stat_lines[dev->slot] + len, 512 - len, "\n	Chip %3d	%.2f Gh/s @ %3.0f MHz (%d bits)		= %.2f Gh/s %+05.1f%% ",
-					chip, ghash, dev->mhz, dev->osc6_bits, expected_ghash, deviation_percents(ghash, expected_ghash));
+				gh[dev->slot][chip % BITFURY_BANKCHIPS][2] = expected_ghash = dev->mhz * 0.864 / 65;
+				snprintf(stat_lines[dev->slot] + len, 512 - len, "\n	Chip %3d	%.2f Gh/s @ %3.0f MHz (%d bits)		= %.2f Gh/s %+05.1f%% (rev 2 %.2f Gh/s %+05.1f%%) ",
+					chip, ghash, dev->mhz, dev->osc6_bits, expected_ghash, deviation_percents(ghash, expected_ghash), expected_ghash2, deviation_percents(ghash, expected_ghash2));
 			} else {
-				gh[dev->slot][chip % BITFURY_BANKCHIPS][1] = 0;
+				gh[dev->slot][chip % BITFURY_BANKCHIPS][1] = gh[dev->slot][chip % BITFURY_BANKCHIPS][2] = 0;
 				snprintf(stat_lines[dev->slot] + len, 512 - len, "\n	Chip %3d	%.2f Gh/s @ %3.0f MHz (%d bits)", chip, ghash, dev->mhz, dev->osc6_bits);
 			}
 
@@ -186,18 +187,20 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 		for (i = 0; i < BITFURY_MAXBANKS; i++) {
 			len = strlen(stat_lines[i]);
 			if(len) {
-				double expghsum = 0, ghsum = 0, gh1h = 0, gh2h = 0;
+				double expghsum = 0, expghsum2 = 0, ghsum = 0, gh1h = 0, gh2h = 0;
 
 				for(k = 0; k < BITFURY_BOARDCHIPS; k++) {	// ToDo make it work for more than just 2 boards
 					gh1h += gh[i][k][0];
 					gh2h += gh[i][k + BITFURY_BOARDCHIPS][0];
 					ghsum += gh[i][k][0] + gh[i][k + BITFURY_BOARDCHIPS][0];
 					expghsum += gh[i][k][1] + gh[i][k + BITFURY_BOARDCHIPS][1];
+					expghsum2 += gh[i][k][2] + gh[i][k + BITFURY_BOARDCHIPS][2];
 				}
 				if (ghsum) {
 					total_expgh += expghsum;
-					snprintf(stat_lines[i] + len, 512 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% ",
-						i, gh1h, gh2h, ghsum, expghsum, deviation_percents(ghsum, expghsum));
+					total_expgh2 += expghsum2;
+					snprintf(stat_lines[i] + len, 512 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s	= %.2f Gh/s %+05.1f%%%% (rev 2 %.2f Gh/s %+05.1f%%%%) ",
+						i, gh1h, gh2h, ghsum, expghsum, deviation_percents(ghsum, expghsum), expghsum2, deviation_percents(ghsum, expghsum2));
 				} else {
 					snprintf(stat_lines[i] + len, 512 - len, "\n	Slot %i	%2.2f Gh/s + %2.2f Gh/s = %2.2f Gh/s", i, gh1h, gh2h, ghsum);
 				}
@@ -205,9 +208,10 @@ static void bitfury_show_stats(struct bitfury_device *devices, struct timeval *n
 			}
 		}
 		applog(log_prio, "Total expected: %0.2f Gh/s (%0.2f Gh/s per chip)", total_expgh, total_expgh/chip_n);
+		applog(log_prio, "Total expected rev 2: %0.2f Gh/s (%0.2f Gh/s per chip)", total_expgh2, total_expgh2/chip_n);
 		*out_t = now->tv_sec;
 		if (total_expgh) {
-			scan_delay = 1000 * chip_n / (total_expgh / chip_n);
+			scan_delay = 1000 * chip_n / (total_expgh2 / chip_n);
 			scan_delay_normalize(chip_n);
 		}
 	}
